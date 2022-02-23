@@ -24,6 +24,37 @@ namespace CorrelationAnalysis
         {
             CorrelationAnalysis corr = new CorrelationAnalysis(71, 10);
             corr.Execute();
+            Output(dataGridView5, corr.DispMatr);
+            Output(dataGridView1, corr.StandartMatr, 71, 10);
+            Output(dataGridView2, corr.CovarMatr, 10, 10, true);
+            Output(dataGridView3, corr.CorrMatr, 10, 10, true);
+
+        }
+
+        public void Output( DataGridView dataGrid, double[,] matr, int row, int column, bool toPaint = false)
+        {
+            for (int i = 0; i < row; i++)
+            {
+                dataGrid.Rows.Add();
+                for (int j = 0; j < column; j++)
+                {
+                    dataGrid.Rows[i].Cells[j].Value = String.Format("{0:f3}", matr[i, j]);
+                    dataGrid.AutoResizeColumn(j);
+                    if (toPaint && i == j){
+                        dataGrid.Rows[i].Cells[j].Style.BackColor = Color.Bisque;
+                    }
+                }
+            }
+        }
+
+        public void Output(DataGridView dataGrid, double [] arr)
+        {
+            dataGrid.Rows.Add();
+            for(int i = 0; i < arr.Length; i++)
+            {
+                dataGrid.Rows[0].Cells[i].Value = String.Format("{0:f3}", arr[i]);
+                dataGrid.AutoResizeColumn(i);
+            }
         }
     }
 
@@ -50,6 +81,14 @@ namespace CorrelationAnalysis
             corrMatr = new double[column, column];
         }
 
+        public double[,] StandartMatr { get => standartMatr; }
+        
+        public double[,] CovarMatr { get => covarMatr; }
+
+        public double[,] CorrMatr { get => corrMatr; }
+
+        public double[] DispMatr { get => dispEstMatr; }
+
         public void Execute()
         {
             ExelWork exelObj = new ExelWork(row, column);
@@ -62,7 +101,6 @@ namespace CorrelationAnalysis
             CovariationMatrix(matr);
         }
 
-        //finding average value og earch column
         private void FindAverage(double[,] matr)
         {
             for (int i = 0; i < column; i++)
@@ -76,7 +114,6 @@ namespace CorrelationAnalysis
             }
         }
 
-        //finding variance estimate of earch column
         private void FindVarianceEstimate(double[,] matr)
         {
             for (int i = 0; i < column; i++)
@@ -90,7 +127,6 @@ namespace CorrelationAnalysis
             }
         }
 
-        //creating standartized matrix
         public void StandartizedMatrix(double[,] matr)
         {
             for (int i = 0; i < row; i++)
@@ -102,7 +138,6 @@ namespace CorrelationAnalysis
             }
         }
 
-        //covaration of matrix
         public void CovariationMatrix(double[,] matr)
         {
             for (int i = 0; i < column; i++)
@@ -119,7 +154,6 @@ namespace CorrelationAnalysis
             }
         }
 
-        //correlation of matrix
         public void CorrelationMatrix()
         {
             for (int i = 0; i < column; i++)
@@ -132,17 +166,6 @@ namespace CorrelationAnalysis
                         sum += standartMatr[k, i] * standartMatr[k, j];
                     }
                     corrMatr[i, j] = sum / row;
-                }
-            }
-        }
-
-        public void Output(double[,] matr)
-        {
-            for (int i = 0; i < row; i++)
-            {
-                for (int j = 0; j < column; j++)
-                {
-                    
                 }
             }
         }
@@ -165,7 +188,7 @@ namespace CorrelationAnalysis
         public double[,] ExportFile()
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
-            fileDialog.Title = "Выбер документа";
+            fileDialog.Title = "Выбор документа";
             fileDialog.DefaultExt = "*.xls;*.xlsx";
 
             if (!(fileDialog.ShowDialog() == DialogResult.OK))
