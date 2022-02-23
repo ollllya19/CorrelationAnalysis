@@ -142,7 +142,7 @@ namespace CorrelationAnalysis
             {
                 for (int j = 0; j < column; j++)
                 {
-                    //dataGridView1.Rows[i].Cells[j].Value = matr[i, j];
+                    
                 }
             }
         }
