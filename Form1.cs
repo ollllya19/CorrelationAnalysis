@@ -7,9 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using file = Microsoft.Office.Interop.Excel;
-using OfficeOpenXml;
-using LicenseContext = OfficeOpenXml.LicenseContext;
+using CorrelationAnalysis;
 
 namespace CorrelationAnalysis
 {
@@ -28,10 +26,11 @@ namespace CorrelationAnalysis
             Output(dataGridView1, corr.StandartMatr, 71, 10);
             Output(dataGridView2, corr.CovarMatr, 10, 10, true);
             Output(dataGridView3, corr.CorrMatr, 10, 10, true);
+            Output(dataGridView4, corr.HyptMatr, 10, 10);
 
         }
 
-        public void Output( DataGridView dataGrid, double[,] matr, int row, int column, bool toPaint = false)
+        private void Output( DataGridView dataGrid, double[,] matr, int row, int column, bool toPaint = false)
         {
             for (int i = 0; i < row; i++)
             {
@@ -47,7 +46,25 @@ namespace CorrelationAnalysis
             }
         }
 
-        public void Output(DataGridView dataGrid, double [] arr)
+        private void Output(DataGridView dataGrid, int[,] matr, int row, int column)
+        {
+            for (int i = 0; i < row; i++)
+            {
+                dataGrid.Rows.Add();
+                for (int j = 0; j < column; j++)
+                {
+                    if (matr[i, j] == 0)
+                        dataGrid.Rows[i].Cells[j].Value = "  H0  ";
+                    else
+                        dataGrid.Rows[i].Cells[j].Value = "  H1  ";
+                    if (i == j)
+                        dataGrid.Rows[i].Cells[j].Value = "  -   ";
+                    dataGrid.AutoResizeColumn(j);
+                }
+            }
+        }
+
+        private void Output(DataGridView dataGrid, double [] arr)
         {
             dataGrid.Rows.Add();
             for(int i = 0; i < arr.Length; i++)
@@ -55,158 +72,6 @@ namespace CorrelationAnalysis
                 dataGrid.Rows[0].Cells[i].Value = String.Format("{0:f3}", arr[i]);
                 dataGrid.AutoResizeColumn(i);
             }
-        }
-    }
-
-    class CorrelationAnalysis
-    {
-        int column;
-        int row;
-        double[,] matr;
-        double[] averValues;
-        double[] dispEstMatr;
-        double[,] standartMatr;
-        double[,] covarMatr;
-        double[,] corrMatr;
-
-        public CorrelationAnalysis(int row, int column)
-        {
-            this.row = row;
-            this.column = column;
-            matr = new double[row, column];
-            averValues = new double[column];
-            dispEstMatr = new double[column];
-            standartMatr = new double[row, column];
-            covarMatr = new double[column, column];
-            corrMatr = new double[column, column];
-        }
-
-        public double[,] StandartMatr { get => standartMatr; }
-        
-        public double[,] CovarMatr { get => covarMatr; }
-
-        public double[,] CorrMatr { get => corrMatr; }
-
-        public double[] DispMatr { get => dispEstMatr; }
-
-        public void Execute()
-        {
-            ExelWork exelObj = new ExelWork(row, column);
-            matr = exelObj.ExportFile();
-
-            FindAverage(matr);
-            FindVarianceEstimate(matr);
-            StandartizedMatrix(matr);
-            CorrelationMatrix();
-            CovariationMatrix(matr);
-        }
-
-        private void FindAverage(double[,] matr)
-        {
-            for (int i = 0; i < column; i++)
-            {
-                double sum = 0;
-                for (int j = 0; j < row; j++)
-                {
-                    sum += matr[j, i];
-                }
-                averValues[i] = sum / row;
-            }
-        }
-
-        private void FindVarianceEstimate(double[,] matr)
-        {
-            for (int i = 0; i < column; i++)
-            {
-                double sum = 0;
-                for (int j = 0; j < row; j++)
-                {
-                    sum += Math.Pow(matr[j, i] - averValues[i], 2);
-                }
-                dispEstMatr[i] = sum / row;
-            }
-        }
-
-        public void StandartizedMatrix(double[,] matr)
-        {
-            for (int i = 0; i < row; i++)
-            {
-                for (int j = 0; j < column; j++)
-                {
-                    standartMatr[i, j] = (matr[i, j] - averValues[j]) / Math.Sqrt(dispEstMatr[j]);
-                }
-            }
-        }
-
-        public void CovariationMatrix(double[,] matr)
-        {
-            for (int i = 0; i < column; i++)
-            {
-                for (int j = 0; j < column; j++)
-                {
-                    double sum = 0;
-                    for (int k = 0; k < row; k++)
-                    {
-                        sum += (matr[k, i] - averValues[i]) * (matr[k, j] - averValues[j]);
-                    }
-                    covarMatr[i, j] = sum / row;
-                }
-            }
-        }
-
-        public void CorrelationMatrix()
-        {
-            for (int i = 0; i < column; i++)
-            {
-                for (int j = 0; j < column; j++)
-                {
-                    double sum = 0;
-                    for (int k = 0; k < row; k++)
-                    {
-                        sum += standartMatr[k, i] * standartMatr[k, j];
-                    }
-                    corrMatr[i, j] = sum / row;
-                }
-            }
-        }
-    }
-
-    //class of expoerting data from exel
-    class ExelWork
-    {
-        int column;
-        int row;
-        double[,] matr;
-
-        public ExelWork(int row, int column)
-        {
-            this.row = row;
-            this.column = column;
-            matr = new double[row, column];
-        }
-
-        public double[,] ExportFile()
-        {
-            OpenFileDialog fileDialog = new OpenFileDialog();
-            fileDialog.Title = "Выбор документа";
-            fileDialog.DefaultExt = "*.xls;*.xlsx";
-
-            if (!(fileDialog.ShowDialog() == DialogResult.OK))
-                return matr;
-
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-            var package = new ExcelPackage(fileDialog.FileName);
-            ExcelWorksheet sheet = package.Workbook.Worksheets[0];
-
-            for (int i = 0; i < row; i++)
-            {
-                for (int j = 0; j < column; j++)
-                {
-                    matr[i, j] = (double)sheet.Cells[i + 1, j + 1].Value;
-                }
-            }
-
-            return matr;
         }
     }
 }
