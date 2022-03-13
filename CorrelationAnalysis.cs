@@ -11,16 +11,16 @@ namespace CorrelationAnalysis
 {
     public class CorrelationAnalysis
     {
-        int column;
-        int row;
-        double[,] matr;
-        double[] averValues;
-        double[] dispEstMatr;
-        double[,] standartMatr;
-        double[,] covarMatr;
-        double[,] corrMatr;
-        int[,] hyptmatr;
-        const double tTable = 1.994954;
+        protected int column;
+        protected int row;
+        protected double[,] matr;
+        protected double[] averValues;
+        protected double[] dispEstMatr;
+        protected double[,] standartMatr;
+        protected double[,] covarMatr;
+        protected double[,] corrMatr;
+        protected int[,] hyptmatr;
+        protected const double tTable = 1.994954;
 
         public CorrelationAnalysis(int row, int column)
         {
@@ -35,6 +35,8 @@ namespace CorrelationAnalysis
             hyptmatr = new int[column, column];
         }
 
+        public double[,] Matr { get => matr; }
+
         public double[,] StandartMatr { get => standartMatr; }
 
         public double[,] CovarMatr { get => covarMatr; }
@@ -43,7 +45,7 @@ namespace CorrelationAnalysis
 
         public double[] DispMatr { get => dispEstMatr; }
 
-        public int [,] HyptMatr { get => hyptmatr; }
+        public int[,] HyptMatr { get => hyptmatr; }
 
         public void Execute()
         {
@@ -58,7 +60,7 @@ namespace CorrelationAnalysis
             HypoteticMatr();
         }
 
-        private void FindAverage(double[,] matr)
+        protected void FindAverage(double[,] matr)
         {
             for (int i = 0; i < column; i++)
             {
@@ -71,7 +73,7 @@ namespace CorrelationAnalysis
             }
         }
 
-        private void FindVarianceEstimate(double[,] matr)
+        protected void FindVarianceEstimate(double[,] matr)
         {
             for (int i = 0; i < column; i++)
             {
@@ -84,7 +86,7 @@ namespace CorrelationAnalysis
             }
         }
 
-        public void StandartizedMatrix(double[,] matr)
+        protected void StandartizedMatrix(double[,] matr)
         {
             for (int i = 0; i < row; i++)
             {
@@ -95,7 +97,7 @@ namespace CorrelationAnalysis
             }
         }
 
-        public void CovariationMatrix(double[,] matr)
+        protected void CovariationMatrix(double[,] matr)
         {
             for (int i = 0; i < column; i++)
             {
@@ -111,7 +113,7 @@ namespace CorrelationAnalysis
             }
         }
 
-        public void CorrelationMatrix()
+        protected void CorrelationMatrix()
         {
             for (int i = 0; i < column; i++)
             {
@@ -127,7 +129,7 @@ namespace CorrelationAnalysis
             }
         }
 
-        public void HypoteticMatr()
+        protected void HypoteticMatr()
         {
             for (int i = 0; i < column; i++)
             {
@@ -141,6 +143,105 @@ namespace CorrelationAnalysis
                 }
             }
 
+        }
+    }
+
+
+    //Matrix X is of 69x9 elements
+    //Y is vector of 69 elements
+
+    class RegressionAnalysis
+    {
+        protected CorrelationAnalysis corrAn;
+        protected int n, m;
+        protected double[,] matrX;
+        protected double[,] matrTx;
+        protected double[] y;
+
+
+        public RegressionAnalysis(CorrelationAnalysis corrAn, int n, int m)
+        {
+            this.corrAn = corrAn;
+            this.n = n;
+            this.m = m;
+            matrX = new double[n, m];
+            matrTx = new double[m, n];
+
+            //filling matrX
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0, k = 0; j < m; j++, k++)
+                {
+                    if (j == m - 1)
+                        matrX[i, j] = 1;
+                    else
+                    {
+                        if (j == 3 || j == 8)
+                            k++;
+                        matrX[i, j] = corrAn.Matr[i, k];
+                    }
+
+                }
+            }
+            //filling y-vector
+            y = new double[n];
+            for (int i = 0; i < n; i++)
+                y[i] = corrAn.Matr[i, 8];
+
+            
+
+
+        }
+
+        public double[,] MatrX { get => matrX; }
+
+        public double[,] MatrTX { get => matrTx; }
+
+        
+    }
+
+    //class working with matrixes
+    class Matrix
+    {
+        public static double [,] TransposeMatr(double[,] matr, int n, int m)
+        {
+            double[,] rez = new double[n, m];
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    rez[j, i] = matr[i, j];
+                }
+            }
+            return rez;
+        }
+
+        public static double[,] MultipleMatr(double[,] matr1, double[,] matr2, int n1, int m1, int n2, int m2)
+        {
+            double[,] rez = new double[n1, m2];
+            if (m1 == n2)
+            {
+                double sum = 0;
+
+                for (int i = 0; i < n1; i++)
+                {
+                    for (int j = 0; j < m2; j++)
+                    {
+                        for (int k = 0; k < m1; k++)
+                            sum += matr1[i, k] * matr2[k, j];
+                        rez[i, j] = sum;
+                        sum = 0;
+                    }
+                }
+            }
+            return rez;
+        }
+
+
+        public static double Determinant(double[,] matr, int n, int m)
+        {
+            return matr[0, 0] * matr[1, 1] * matr[2, 2] + matr[0, 1] * matr[1, 2] * matr[2, 0] + matr[1, 0] * matr[2, 1] * matr[0, 2] -
+                matr[0, 2] * matr[1, 1] * matr[2, 0] - matr[1, 0] * matr[0, 1] * matr[2, 2] - matr[0, 0] * matr[2, 1] * matr[1, 2];
         }
     }
 
