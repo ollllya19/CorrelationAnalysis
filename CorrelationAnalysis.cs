@@ -167,7 +167,6 @@ namespace CorrelationAnalysis
             matrX = new double[n, m];
             matrTx = new double[m, n];
 
-            //filling matrX
             for (int i = 0; i < n; i++)
             {
                 for (int j = 0, k = 0; j < m; j++, k++)
@@ -183,20 +182,15 @@ namespace CorrelationAnalysis
 
                 }
             }
-            //filling y-vector
+
             y = new double[n];
             for (int i = 0; i < n; i++)
                 y[i] = corrAn.Matr[i, 8];
-
-            
-
-
         }
 
         public double[,] MatrX { get => matrX; }
 
         public double[,] MatrTX { get => matrTx; }
-
         
     }
 
